@@ -10,6 +10,7 @@ from tkinter import messagebox
 import pymysql as psql
 
 import db_config_file
+import GM_GUI_functions as ggf
 import db_functions
 
 
@@ -24,15 +25,21 @@ except:
 
     error_window = tk.Tk()
     error_window.title('Database connection error!')
-    error_window.geometry('640x480')
+    error_window.geometry('480x264')
+    error_frame = tk.Frame(error_window)
+    error_frame.pack(expand='true')
 
-    message_frame = ttk.Frame(error_window)
+
     label = tk.Label(
-        message_frame, compound=tk.CENTER,
+        error_frame, anchor='s',
         font="Helvetica 14 bold",
         foreground="black", text="Failed to connect to garden database."
                                   "\nCheck that connection settings are correct.")
     label.pack()
+
+    exit_button = tk.Button(error_frame, font="Helvetica 14 bold", text='Exit', fg='black',
+                            command=ggf.acknowledgeConnectionError())
+    exit_button.pack(side='bottom')
 
     error_window.mainloop()
 
