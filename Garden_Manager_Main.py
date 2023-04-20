@@ -11,46 +11,45 @@ import pymysql as psql
 
 import db_config_file
 import GM_GUI_functions as ggf
-import db_functions
+import GM_db_functions as gdf
 
+#1. Attempt to establish connection to database.
+status, con = gdf.open_database()
 
-"""1. Establish connection to database and handle possible exceptions."""
-try:
-    con = psql.connect(host=db_config_file.DB_SERVER,
-                      user=db_config_file.DB_USER,
-                      password=db_config_file.DB_PASS,
-                      database=db_config_file.DB, port=db_config_file.DB_PORT)
-
-except:
-
+#2. Handle exceptions causing failure to connect.
+if status == 0:
     error_window = tk.Tk()
     error_window.title('Database connection error!')
-    error_window.geometry('480x264')
+    error_window.geometry('768x264')
     error_frame = tk.Frame(error_window)
+    s = ttk.Style(error_frame)
+    s.theme_use('clam')
     error_frame.pack(expand='true')
 
-
-    label = tk.Label(
+    label1 = tk.Label(
         error_frame, anchor='s',
         font="Helvetica 14 bold",
-        foreground="black", text="Failed to connect to garden database."
-                                  "\nCheck that connection settings are correct.")
-    label.pack()
+        foreground="black", text=f"An error occurred while trying to connect to the database:\n{con}\nCheck that connection settings are correct.", padx=5)
+    label1.pack()
 
     exit_button = tk.Button(error_frame, font="Helvetica 14 bold", text='Exit', fg='black',
-                            command=ggf.acknowledgeConnectionError())
+                            command=ggf.acknowledgeConnectionError, padx=5)
     exit_button.pack(side='bottom')
 
     error_window.mainloop()
 
+#3. Begin main application.
 else:
 
     '''1. Create  the root program and notebook.'''
     root = tk.Tk()
     root.title('Garden Manager 1.0')
     root.geometry('1024x640')
+    s = ttk.Style(root)
+    s.theme_use('clam')
 
     program = ttk.Notebook(root)
+    s.configure("TNotebook", tabposition='n')
 
     """2. Create the 'Gardens' tab with subtabs for viewing and creating gardens."""
     gardens_tab = ttk.Frame(program)
@@ -59,7 +58,10 @@ else:
     gardens_subtabs = ttk.Notebook(gardens_tab)
 
     view_gardens_subtab = ttk.Frame(gardens_subtabs)
-    gardens_subtabs.add(view_gardens_subtab, text='View Existing Garden')
+    gardens_subtabs.add(view_gardens_subtab, text='View Existing Gardens')
+
+    existing_gardens_list = tk.Listbox(view_gardens_subtab)
+    existing_gardens_list.pack()
 
     create_garden_subtab = ttk.Frame(gardens_subtabs)
     gardens_subtabs.add(create_garden_subtab, text='Create New Garden')
@@ -94,9 +96,14 @@ else:
 
     records_subtabs.pack(expand=1, fill='both')
 
+
+
+
+
+    num_gardens, gardens = gdf.query_database(con, 'SELECT * FROM gardens')
+    for num, garden in enumerate(gardens):
+        existing_gardens_list.insert(num, garden[1])
+
     program.pack(expand=1, fill='both')
-
-
-
     # ======== main loop ============ #
     root.mainloop()

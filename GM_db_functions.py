@@ -1,6 +1,8 @@
 # === some database commands ======
 
 import pymysql
+from tkinter import messagebox
+import GM_db_functions
 import db_config_file
 
 class DatabaseError(Exception):
@@ -15,17 +17,18 @@ def open_database():
                               password=db_config_file.DB_PASS,
                               database=db_config_file.DB,
                               port=db_config_file.DB_PORT)
-        return con
+        status = 1
+        return status, con
 
     except pymysql.InternalError as e:
-        print(e)
-        raise DatabaseError(e)
+        status = 0
+        return status, e
     except pymysql.OperationalError as e:
-        print(e)
-        raise DatabaseError(e)
+        status = 0
+        return status, e
     except pymysql.NotSupportedError as e:
-        print(e)
-        raise DatabaseError(e)
+        status = 0
+        return status, e
 
 
 def query_database(con, sql, values):
@@ -57,3 +60,14 @@ def query_database(con, sql, values):
         cursor.close()
         con.close()
         return num_of_rows, rows
+
+def load_database_results(con, sql):
+    global rows
+    global num_rows
+
+    try:
+        num_rows, rows = GM_db_functions.query_database(con, sql, None)
+    except DatabaseError:
+        messagebox.showinfo("Error querying the database.")
+
+    return True
