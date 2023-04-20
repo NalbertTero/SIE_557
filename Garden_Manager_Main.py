@@ -13,10 +13,10 @@ import db_config_file
 import GM_GUI_functions as ggf
 import GM_db_functions as gdf
 
-#1. Attempt to establish connection to database.
+# 1. Attempt to establish connection to database.
 status, con = gdf.open_database()
 
-#2. Handle exceptions causing failure to connect.
+# 2. Handle exceptions causing failure to connect.
 if status == 1:
     error_window = tk.Tk()
     error_window.title('Database connection error!')
@@ -38,10 +38,10 @@ if status == 1:
 
     error_window.mainloop()
 
-#3. Begin main application.
+# 3. Begin main application.
 else:
 
-    '''1. Create  the root program and notebook.'''
+    # 3-A. Create  the root program and notebook.
     root = tk.Tk()
     root.title('Garden Manager 1.0')
     root.geometry('1300x640')
@@ -51,7 +51,7 @@ else:
     program = ttk.Notebook(root)
     s.configure("TNotebook", tabposition='n')
 
-    """2. Create the 'Records' tab with subtabs for viewing and adding records."""
+    # 3-B. Create the 'Records' tab with subtabs for viewing and adding records.
     records_tab = ttk.Frame(program)
     program.add(records_tab, text='Garden Records')
 
@@ -80,7 +80,7 @@ else:
 
     records_subtabs.pack(expand=1, fill='both')
 
-    """3. Create the 'Plans' tab with subtabs for viewing and creating plans."""
+    # 3-C. Create the 'Plans' tab with subtabs for viewing and creating plans.
     plans_tab = ttk.Frame(program)
     program.add(plans_tab, text='Garden Plans')
 
@@ -96,6 +96,9 @@ else:
 
     for i, num in enumerate(range(100)):
         existing_gardens_listbox.insert(1, num)
+
+    chosen_garden_records.insert('', 'end', 'Bed 1', text='Bed 1')
+    chosen_garden_records.insert('Bed 1', 'end', 'Amish Paste Tomato', text='Amish Paste Tomato', values=('2022', 'Amish Paste Tomato', 'Nightshade'))
     # num_gardens, gardens = gdf.query_database(con, 'SELECT * FROM gardens')
     # for num, garden in enumerate(gardens):
     #     existing_gardens_list.insert(num, garden[1])
