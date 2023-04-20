@@ -17,7 +17,7 @@ import GM_db_functions as gdf
 status, con = gdf.open_database()
 
 #2. Handle exceptions causing failure to connect.
-if status == 0:
+if status == 1:
     error_window = tk.Tk()
     error_window.title('Database connection error!')
     error_window.geometry('768x264')
@@ -44,33 +44,45 @@ else:
     '''1. Create  the root program and notebook.'''
     root = tk.Tk()
     root.title('Garden Manager 1.0')
-    root.geometry('1024x640')
+    root.geometry('1300x640')
     s = ttk.Style(root)
     s.theme_use('clam')
 
     program = ttk.Notebook(root)
     s.configure("TNotebook", tabposition='n')
 
-    """2. Create the 'Gardens' tab with subtabs for viewing and creating gardens."""
-    gardens_tab = ttk.Frame(program)
-    program.add(gardens_tab, text='Gardens')
+    """2. Create the 'Records' tab with subtabs for viewing and adding records."""
+    records_tab = ttk.Frame(program)
+    program.add(records_tab, text='Garden Records')
 
-    gardens_subtabs = ttk.Notebook(gardens_tab)
+    records_subtabs = ttk.Notebook(records_tab)
 
-    view_gardens_subtab = ttk.Frame(gardens_subtabs)
-    gardens_subtabs.add(view_gardens_subtab, text='View Existing Gardens')
+    view_records_subtab = ttk.Frame(records_subtabs)
+    records_subtabs.add(view_records_subtab, text='View Existing Records')
 
-    existing_gardens_list = tk.Listbox(view_gardens_subtab)
-    existing_gardens_list.pack()
+    existing_gardens_list_label = tk.Label(view_records_subtab, text='Existing Gardens', pady=5)
+    existing_gardens_list_label.grid(column=0, row=1)
+    existing_gardens_scrollbar = tk.Scrollbar(view_records_subtab, orient="vertical", )
+    existing_gardens_listbox = tk.Listbox(view_records_subtab, yscrollcommand=existing_gardens_scrollbar.set)
+    existing_gardens_scrollbar.config(command=existing_gardens_listbox.yview)
+    existing_gardens_listbox.grid(column=0, row=2,)
+    existing_gardens_scrollbar.grid(column=1, row=2)
 
-    create_garden_subtab = ttk.Frame(gardens_subtabs)
-    gardens_subtabs.add(create_garden_subtab, text='Create New Garden')
+    tree_columns = ('Year', 'Cultivar', 'Family', 'Area', 'Planted', 'Harvested', 'Pulled', 'Pest', 'Disease')
+    chosen_garden_records = ttk.Treeview(view_records_subtab, columns=tree_columns, height=25)
+    for column in tree_columns:
+        chosen_garden_records.column(column, width=100)
+        chosen_garden_records.heading(column, text=column)
+    chosen_garden_records.grid(column=2, row=2)
 
-    gardens_subtabs.pack(expand=1, fill='both')
+    add_records_subtab = ttk.Frame(records_subtabs)
+    records_subtabs.add(add_records_subtab, text='Add New Records')
+
+    records_subtabs.pack(expand=1, fill='both')
 
     """3. Create the 'Plans' tab with subtabs for viewing and creating plans."""
     plans_tab = ttk.Frame(program)
-    program.add(plans_tab, text='Garden Planning')
+    program.add(plans_tab, text='Garden Plans')
 
     plans_subtabs = ttk.Notebook(plans_tab)
 
@@ -82,27 +94,11 @@ else:
 
     plans_subtabs.pack(expand=1, fill='both')
 
-    """4. Create the 'Records' tab with subtabs for viewing and creating records."""
-    records_tab = ttk.Frame(program)
-    program.add(records_tab, text='Garden Records')
-
-    records_subtabs = ttk.Notebook(records_tab)
-
-    view_records_tab = ttk.Frame(records_subtabs)
-    records_subtabs.add(view_records_tab, text='View Existing Records')
-
-    create_records_tab = ttk.Frame(records_subtabs)
-    records_subtabs.add(create_records_tab, text='Create New Records')
-
-    records_subtabs.pack(expand=1, fill='both')
-
-
-
-
-
-    num_gardens, gardens = gdf.query_database(con, 'SELECT * FROM gardens')
-    for num, garden in enumerate(gardens):
-        existing_gardens_list.insert(num, garden[1])
+    for i, num in enumerate(range(100)):
+        existing_gardens_listbox.insert(1, num)
+    # num_gardens, gardens = gdf.query_database(con, 'SELECT * FROM gardens')
+    # for num, garden in enumerate(gardens):
+    #     existing_gardens_list.insert(num, garden[1])
 
     program.pack(expand=1, fill='both')
     # ======== main loop ============ #
