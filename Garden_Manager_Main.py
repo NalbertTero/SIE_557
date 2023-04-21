@@ -1,7 +1,7 @@
 __author__ = 'Nalbert Tero'
 __copyright__ = "Copyright 2023"
 __version__ = "1.0"
-__date__ = "03/18/2021"
+__date__ = "04/21/2023"
 
 import tkinter as tk
 from tkinter import ttk
@@ -10,7 +10,6 @@ from tkinter import messagebox
 import pymysql as psql
 
 import db_config_file
-import GM_GUI_functions as ggf
 import GM_db_functions as gdf
 
 rows = []
