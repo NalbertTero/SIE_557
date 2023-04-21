@@ -57,10 +57,7 @@ def onGardenSelect(event):
         num_records, records = gdf.load_database_results(con, f"SELECT * FROM croprecord LEFT JOIN cultivar ON croprecord.cultivar = cultivar.CultivarName WHERE croprecord.Bed = '{row[0]}'")
         for record in records:
             print(record)
-            chosen_garden_records.insert(row[0], 'end', record[1], text='Amish Paste Tomato', values=(record[2], record[1], record[12], record[4], record[5], record[6], record[7], record[8], record[9]))
-
-
-
+            chosen_garden_records.insert(row[0], 'end', record[1], text='', values=(record[2], record[1], record[12], record[4], record[5], record[6], record[7], record[8], record[9]))
 
 
 # 1. Attempt to establish connection to database as a test.
