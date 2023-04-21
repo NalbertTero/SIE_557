@@ -11,78 +11,64 @@ import pymysql as psql
 
 import db_config_file
 import GM_GUI_functions as ggf
-import GM_db_functions as gdf
+import db_functions
 
-# 1. Attempt to establish connection to database.
-status, con = gdf.open_database()
 
-# 2. Handle exceptions causing failure to connect.
-if status == 1:
+"""1. Establish connection to database and handle possible exceptions."""
+try:
+    con = psql.connect(host=db_config_file.DB_SERVER,
+                      user=db_config_file.DB_USER,
+                      password=db_config_file.DB_PASS,
+                      database=db_config_file.DB, port=db_config_file.DB_PORT)
+
+except:
+
     error_window = tk.Tk()
     error_window.title('Database connection error!')
-    error_window.geometry('768x264')
+    error_window.geometry('480x264')
     error_frame = tk.Frame(error_window)
-    s = ttk.Style(error_frame)
-    s.theme_use('clam')
     error_frame.pack(expand='true')
 
-    label1 = tk.Label(
+
+    label = tk.Label(
         error_frame, anchor='s',
         font="Helvetica 14 bold",
-        foreground="black", text=f"An error occurred while trying to connect to the database:\n{con}\nCheck that connection settings are correct.", padx=5)
-    label1.pack()
+        foreground="black", text="Failed to connect to garden database."
+                                  "\nCheck that connection settings are correct.")
+    label.pack()
 
     exit_button = tk.Button(error_frame, font="Helvetica 14 bold", text='Exit', fg='black',
-                            command=ggf.acknowledgeConnectionError, padx=5)
+                            command=ggf.acknowledgeConnectionError())
     exit_button.pack(side='bottom')
 
     error_window.mainloop()
 
-# 3. Begin main application.
 else:
 
-    # 3-A. Create  the root program and notebook.
+    '''1. Create  the root program and notebook.'''
     root = tk.Tk()
     root.title('Garden Manager 1.0')
-    root.geometry('1300x640')
-    s = ttk.Style(root)
-    s.theme_use('clam')
+    root.geometry('1024x640')
 
     program = ttk.Notebook(root)
-    s.configure("TNotebook", tabposition='n')
 
-    # 3-B. Create the 'Records' tab with subtabs for viewing and adding records.
-    records_tab = ttk.Frame(program)
-    program.add(records_tab, text='Garden Records')
+    """2. Create the 'Gardens' tab with subtabs for viewing and creating gardens."""
+    gardens_tab = ttk.Frame(program)
+    program.add(gardens_tab, text='Gardens')
 
-    records_subtabs = ttk.Notebook(records_tab)
+    gardens_subtabs = ttk.Notebook(gardens_tab)
 
-    view_records_subtab = ttk.Frame(records_subtabs)
-    records_subtabs.add(view_records_subtab, text='View Existing Records')
+    view_gardens_subtab = ttk.Frame(gardens_subtabs)
+    gardens_subtabs.add(view_gardens_subtab, text='View Existing Garden')
 
-    existing_gardens_list_label = tk.Label(view_records_subtab, text='Existing Gardens', pady=5)
-    existing_gardens_list_label.grid(column=0, row=1)
-    existing_gardens_scrollbar = tk.Scrollbar(view_records_subtab, orient="vertical", )
-    existing_gardens_listbox = tk.Listbox(view_records_subtab, yscrollcommand=existing_gardens_scrollbar.set)
-    existing_gardens_scrollbar.config(command=existing_gardens_listbox.yview)
-    existing_gardens_listbox.grid(column=0, row=2,)
-    existing_gardens_scrollbar.grid(column=1, row=2)
+    create_garden_subtab = ttk.Frame(gardens_subtabs)
+    gardens_subtabs.add(create_garden_subtab, text='Create New Garden')
 
-    tree_columns = ('Year', 'Cultivar', 'Family', 'Area', 'Planted', 'Harvested', 'Pulled', 'Pest', 'Disease')
-    chosen_garden_records = ttk.Treeview(view_records_subtab, columns=tree_columns, height=25)
-    for column in tree_columns:
-        chosen_garden_records.column(column, width=100)
-        chosen_garden_records.heading(column, text=column)
-    chosen_garden_records.grid(column=2, row=2)
+    gardens_subtabs.pack(expand=1, fill='both')
 
-    add_records_subtab = ttk.Frame(records_subtabs)
-    records_subtabs.add(add_records_subtab, text='Add New Records')
-
-    records_subtabs.pack(expand=1, fill='both')
-
-    # 3-C. Create the 'Plans' tab with subtabs for viewing and creating plans.
+    """3. Create the 'Plans' tab with subtabs for viewing and creating plans."""
     plans_tab = ttk.Frame(program)
-    program.add(plans_tab, text='Garden Plans')
+    program.add(plans_tab, text='Garden Planning')
 
     plans_subtabs = ttk.Notebook(plans_tab)
 
@@ -94,15 +80,23 @@ else:
 
     plans_subtabs.pack(expand=1, fill='both')
 
-    for i, num in enumerate(range(100)):
-        existing_gardens_listbox.insert(1, num)
+    """4. Create the 'Records' tab with subtabs for viewing and creating records."""
+    records_tab = ttk.Frame(program)
+    program.add(records_tab, text='Garden Records')
 
-    chosen_garden_records.insert('', 'end', 'Bed 1', text='Bed 1')
-    chosen_garden_records.insert('Bed 1', 'end', 'Amish Paste Tomato', text='Amish Paste Tomato', values=('2022', 'Amish Paste Tomato', 'Nightshade'))
-    # num_gardens, gardens = gdf.query_database(con, 'SELECT * FROM gardens')
-    # for num, garden in enumerate(gardens):
-    #     existing_gardens_list.insert(num, garden[1])
+    records_subtabs = ttk.Notebook(records_tab)
+
+    view_records_tab = ttk.Frame(records_subtabs)
+    records_subtabs.add(view_records_tab, text='View Existing Records')
+
+    create_records_tab = ttk.Frame(records_subtabs)
+    records_subtabs.add(create_records_tab, text='Create New Records')
+
+    records_subtabs.pack(expand=1, fill='both')
 
     program.pack(expand=1, fill='both')
+
+
+
     # ======== main loop ============ #
     root.mainloop()
