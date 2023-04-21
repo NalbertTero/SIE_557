@@ -17,7 +17,7 @@ import GM_db_functions as gdf
 status, con = gdf.open_database()
 
 # 2. Handle exceptions causing failure to connect.
-if status == 0:
+if status == 1:
     error_window = tk.Tk()
     error_window.title('Database connection error!')
     error_window.geometry('768x264')
