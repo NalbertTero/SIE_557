@@ -1,5 +1,3 @@
-# === some database commands ======
-
 import pymysql
 from tkinter import messagebox
 import GM_db_functions
@@ -58,7 +56,7 @@ def query_database(con, sql, values):
         raise DatabaseError(e)
     finally:
         cursor.close()
-        con.close()
+        #con.close()
         return num_of_rows, rows
 
 def load_database_results(con, sql):
@@ -70,4 +68,4 @@ def load_database_results(con, sql):
     except DatabaseError:
         messagebox.showinfo("Error querying the database.")
 
-    return True
+    return num_rows, rows
