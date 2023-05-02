@@ -15,6 +15,10 @@ import GM_db_functions as gdf
 rows = []
 num_rows = 0
 
+
+# Defining functions for controlling application GUI behavior.
+# --------------------------------------------------------------------------------------------------------------------------------
+
 def acknowledgeConnectionError():
     quit()
 def on_tab_selected(event):
@@ -22,23 +26,26 @@ def on_tab_selected(event):
     selected_tab = event.widget.select()
     tab_text = event.widget.tab(selected_tab, "text")
 
-    if tab_text == "View Existing Records":
+    if tab_text == "Garden Records":
 
         existing_gardens_listbox.delete(0,'end')
         num_rows, rows = gdf.load_database_results(con, "SELECT * FROM gardens")
         for index, row in enumerate(rows):
             existing_gardens_listbox.insert(index, row[1])
 
-    if tab_text == "Add New Records":
+    if tab_text == "Garden Plans":
 
-        messagebox.showinfo("This tab is not yet implemented...")
+        plans_listbox.delete(0, 'end')
+        num_rows, rows = gdf.load_database_results(con, "SELECT * FROM gardens")
+        for index, row in enumerate(rows):
+            plans_listbox.insert(index, row[1])
 
-    if tab_text == "View Existing Plans":
+    if tab_text == "Manage Cultivars":
 
         #messagebox.showinfo("This tab is not yet implemented...")
         pass
 
-    if tab_text == "Create New Plan":
+    if tab_text == "Insights":
 
         messagebox.showinfo("This tab is not yet implemented...")
 
@@ -56,14 +63,15 @@ def onGardenSelect(event):
         chosen_garden_records.insert('', 'end', row[0], text=f'Bed {row[0]} - {row[1]} sq. ft.')
         num_records, records = gdf.load_database_results(con, f"SELECT * FROM croprecord LEFT JOIN cultivar ON croprecord.cultivar = cultivar.CultivarName WHERE croprecord.Bed = '{row[0]}'")
         for record in records:
-            print(record)
             chosen_garden_records.insert(row[0], 'end', record[1], text='', values=(record[2], record[1], record[12], record[4], record[5], record[6], record[7], record[8], record[9]))
 
 
-# 1. Attempt to establish connection to database as a test.
+# Test database connection by attempting to establish a connection.
+# If the connection attempt fails, the program will exit with a warning message.
+# --------------------------------------------------------------------------------------------------------------------------------
+
 status, con = gdf.open_database()
 
-# 2. Handle exceptions causing failure to connect.
 if status == 0:
     error_window = tk.Tk()
     error_window.title('Database connection error!')
@@ -85,10 +93,14 @@ if status == 0:
 
     error_window.mainloop()
 
-# 3. Begin main application.
+
+# If connection tests successfully, declare and launch main application.
+# --------------------------------------------------------------------------------------------------------------------------------
+
 else:
 
-    # 3-A. Create  the root program and notebook.
+    # Create the root program and notebook to hold tabs.
+    # --------------------------------------------------
     root = tk.Tk()
     root.title('Garden Manager 1.0')
     root.geometry('1300x640')
@@ -97,52 +109,59 @@ else:
 
     program = ttk.Notebook(root)
     s.configure("TNotebook", tabposition='n')
+    program.bind("<<NotebookTabChanged>>", on_tab_selected)
 
-    # 3-B. Create the 'Records' tab with subtabs for viewing and adding records.
+    # Declare records tab.
+    # --------------------------------------------------
     records_tab = ttk.Frame(program)
     program.add(records_tab, text='Garden Records')
 
-    records_subtabs = ttk.Notebook(records_tab)
-    records_subtabs.bind("<<NotebookTabChanged>>", on_tab_selected)
-
-    view_records_subtab = ttk.Frame(records_subtabs)
-    records_subtabs.add(view_records_subtab, text='View Existing Records')
-
-    existing_gardens_list_label = tk.Label(view_records_subtab, text='Existing Gardens', pady=5)
+    existing_gardens_list_label = tk.Label(records_tab, text='Existing Gardens', pady=5)
     existing_gardens_list_label.grid(column=0, row=1)
-    existing_gardens_scrollbar = tk.Scrollbar(view_records_subtab, orient="vertical", )
-    existing_gardens_listbox = tk.Listbox(view_records_subtab, yscrollcommand=existing_gardens_scrollbar.set)
+    existing_gardens_scrollbar = tk.Scrollbar(records_tab, orient="vertical", )
+    existing_gardens_listbox = tk.Listbox(records_tab, yscrollcommand=existing_gardens_scrollbar.set)
     existing_gardens_scrollbar.config(command=existing_gardens_listbox.yview)
     existing_gardens_listbox.grid(column=0, row=2,)
     existing_gardens_listbox.bind("<<ListboxSelect>>", onGardenSelect)
     existing_gardens_scrollbar.grid(column=1, row=2)
 
     tree_columns = ('Year', 'Cultivar', 'Family', 'Area', 'Planted', 'Harvested', 'Pulled', 'Pest', 'Disease')
-    chosen_garden_records = ttk.Treeview(view_records_subtab, columns=tree_columns, height=25)
+    chosen_garden_records = ttk.Treeview(records_tab, columns=tree_columns, height=25)
     for column in tree_columns:
-        chosen_garden_records.column(column, width=100)
+        chosen_garden_records.column(column, width=80)
         chosen_garden_records.heading(column, text=column)
     chosen_garden_records.grid(column=2, row=2)
 
-    add_records_subtab = ttk.Frame(records_subtabs)
-    records_subtabs.add(add_records_subtab, text='Add New Records')
-
-    records_subtabs.pack(expand=1, fill='both')
-
-    # 3-C. Create the 'Plans' tab with subtabs for viewing and creating plans.
+    # Declare plans tab.
+    # --------------------------------------------------
     plans_tab = ttk.Frame(program)
     program.add(plans_tab, text='Garden Plans')
 
-    plans_subtabs = ttk.Notebook(plans_tab)
-    plans_subtabs.bind("<<NotebookTabChanged>>", on_tab_selected)
+    plans_list_label = tk.Label(plans_tab, text='Garden Plans', pady=5)
+    plans_list_label.grid(column=0, row=1)
+    plans_scrollbar = tk.Scrollbar(plans_tab, orient="vertical", )
+    plans_listbox = tk.Listbox(plans_tab, yscrollcommand=plans_scrollbar.set)
+    plans_scrollbar.config(command=plans_listbox.yview)
+    plans_listbox.grid(column=0, row=2,)
+    plans_listbox.bind("<<ListboxSelect>>", onGardenSelect)
+    plans_scrollbar.grid(column=1, row=2)
 
-    view_plans_tab = ttk.Frame(plans_subtabs)
-    plans_subtabs.add(view_plans_tab, text='View Existing Plans')
+    tree_columns = ('Year', 'Cultivar', 'Family', 'Area', 'Planted', 'Harvested', 'Pulled', 'Pest', 'Disease')
+    chosen_garden_records = ttk.Treeview(plans_tab, columns=tree_columns, height=25)
+    for column in tree_columns:
+        chosen_garden_records.column(column, width=80)
+        chosen_garden_records.heading(column, text=column)
+    chosen_garden_records.grid(column=2, row=2)
 
-    create_plan_tab = ttk.Frame(plans_subtabs)
-    plans_subtabs.add(create_plan_tab, text='Create New Plan')
+    # Declare manage tab.
+    # --------------------------------------------------
+    manage_tab = ttk.Frame(program)
+    program.add(manage_tab, text='Manage Cultivars')
 
-    plans_subtabs.pack(expand=1, fill='both')
+    # Declare insights tab.
+    # --------------------------------------------------
+    insights_tab = ttk.Frame(program)
+    program.add(insights_tab, text='Insights')
 
 
 
