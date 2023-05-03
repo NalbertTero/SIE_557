@@ -29,10 +29,10 @@ def open_database():
         return status, e
 
 
-def query_database(con, sql, values):
+def query_database(con, sql):
     try:
         cursor = con.cursor()
-        cursor.execute(sql, values)
+        cursor.execute(sql)
         rows = cursor.fetchall()
         num_of_rows = cursor.rowcount
 
@@ -64,8 +64,18 @@ def load_database_results(con, sql):
     global num_rows
 
     try:
-        num_rows, rows = GM_db_functions.query_database(con, sql, None)
+        num_rows, rows = GM_db_functions.query_database(con, sql)
     except DatabaseError:
         messagebox.showinfo("Error querying the database.")
 
     return num_rows, rows
+
+def insertIntoDatabase(con, sql):
+
+    try:
+        cursor = con.cursor()
+        cursor.execute(sql)
+
+    except DatabaseError:
+        messagebox.showinfo("Error adding entry to the database.")
+
