@@ -81,6 +81,25 @@ def onGardenSelect_Record(event):
         addrecord_BedEntry['values'] = bedlist
         addrecord_BedEntry.set(bedlist[0])
 
+def onRecordSelect(event):
+    alterrecord_BedEntry.delete(0, )
+    alterrecord_YearEntry.delete()
+    alterrecord_CultivarEntry.delete()
+    alterrecord_AreaEntry.delete()
+    alterrecord_PlantedEntry.delete()
+    alterrecord_HarvestedEntry.delete()
+    alterrecord_PulledEntry.delete()
+    alterrecord_PestEntry.delete()
+    alterrecord_DiseaseEntry.delete()
+    alterrecord_FailureEntry.delete()
+
+
+def onAddButtonPress():
+    addrecord_subframe.tkraise()
+
+def onAlterButtonPress():
+    alterrecord_subframe.tkraise()
+
 def addCropRecord():
 
     bed = addrecord_BedEntry.get()
@@ -196,13 +215,86 @@ else:
     for column in tree_columns:
         records_treeview.column(column, width=80)
         records_treeview.heading(column, text=column)
+    records_treeview.bind("<<TreeviewSelect>>", onRecordSelect)
     records_treeview.grid(column=0, row=0)
 
+    add_record_button = tk.Button(records_subframe, text='Add new record', command=onAddButtonPress)
+    add_record_button.grid(column=0, row=2, sticky='w', pady=(6,0))
+
+    alter_record_button = tk.Button(records_subframe, text='Alter selected record', command=onAlterButtonPress)
+    alter_record_button.grid(column=0, row=2, pady=(6,0))
+
+    delete_record_button = tk.Button(records_subframe, text='Delete selected record')
+    delete_record_button.grid(column=0, row=2, sticky='e', pady=(6,0))
+
+    # Declare subframe for altering crop records  ------------------
+    alterrecord_subframe = ttk.Frame(records_tab)
+    alterrecord_subframe.grid(column=2, row=0)
+
+    alterrecord_Label = tk.Label(alterrecord_subframe, text="Alter record")
+    alterrecord_Label.grid(column=0, row=0, pady=10)
+
+    alterrecord_BedLabel = tk.Label(alterrecord_subframe, text='Bed')
+    alterrecord_BedEntry = ttk.Combobox(alterrecord_subframe, state='readonly')
+    alterrecord_BedLabel.grid(column=0, row=1, pady=(6,2), padx=10, sticky='w')
+    alterrecord_BedEntry.grid(column=0, row=2, pady=0, padx=10)
+
+    alterrecord_YearLabel = tk.Label(alterrecord_subframe, text='Year')
+    alterrecord_YearEntry = tk.Entry(alterrecord_subframe)
+    alterrecord_YearLabel.grid(column=0, row=3, pady=(6,2), padx=10, sticky='w')
+    alterrecord_YearEntry.grid(column=0, row=4, pady=0, padx=10)
+
+    alterrecord_CultivarLabel = tk.Label(alterrecord_subframe, text='Cultivar')
+    alterrecord_CultivarEntry = ttk.Combobox(alterrecord_subframe, state='readonly')
+    alterrecord_CultivarLabel.grid(column=0, row=5, pady=(6,2), padx=10, sticky='w')
+    alterrecord_CultivarEntry.grid(column=0, row=6, pady=0, padx=10)
+
+    alterrecord_AreaLabel = tk.Label(alterrecord_subframe, text='Area')
+    alterrecord_AreaEntry = tk.Entry(alterrecord_subframe)
+    alterrecord_AreaLabel.grid(column=0, row=7, pady=(6,2), padx=10, sticky='w')
+    alterrecord_AreaEntry.grid(column=0, row=8, pady=0, padx=10)
+
+    alterrecord_PlantedLabel = tk.Label(alterrecord_subframe, text='Date Planted')
+    alterrecord_PlantedEntry = tkc.DateEntry(alterrecord_subframe)
+    alterrecord_PlantedLabel.grid(column=0, row=9, pady=(6,2), padx=10, sticky='w')
+    alterrecord_PlantedEntry.grid(column=0, row=10, pady=0, padx=10, sticky='w')
+
+    alterrecord_HarvestedLabel = tk.Label(alterrecord_subframe, text='Date Harvested')
+    alterrecord_HarvestedEntry = tkc.DateEntry(alterrecord_subframe)
+    alterrecord_HarvestedLabel.grid(column=0, row=11, pady=(6,2), padx=10, sticky='w')
+    alterrecord_HarvestedEntry.grid(column=0, row=12, pady=0, padx=10, sticky='w')
+
+    alterrecord_PulledLabel = tk.Label(alterrecord_subframe, text='Date Pulled')
+    alterrecord_PulledEntry = tkc.DateEntry(alterrecord_subframe)
+    alterrecord_PulledLabel.grid(column=0, row=13, pady=(6,2), padx=10, sticky='w')
+    alterrecord_PulledEntry.grid(column=0, row=14, pady=0, padx=10, sticky='w')
+
+    alterrecord_PestLabel = tk.Label(alterrecord_subframe, text='Pest')
+    alterrecord_PestEntry = ttk.Combobox(alterrecord_subframe, state='readonly', values=['None', 'Low', 'Medium', 'High'])
+    alterrecord_PestEntry.set('None')
+    alterrecord_PestLabel.grid(column=0, row=15, pady=(6,2), padx=10, sticky='w')
+    alterrecord_PestEntry.grid(column=0, row=16, pady=0, padx=10)
+
+    alterrecord_DiseaseLabel = tk.Label(alterrecord_subframe, text='Disease')
+    alterrecord_DiseaseEntry = ttk.Combobox(alterrecord_subframe, state='readonly', values=['None', 'Low', 'Medium', 'High'])
+    alterrecord_DiseaseEntry.set('None')
+    alterrecord_DiseaseLabel.grid(column=0, row=17, pady=(6,2), padx=10, sticky='w')
+    alterrecord_DiseaseEntry.grid(column=0, row=18, pady=0, padx=10)
+
+    alterrecord_FailureLabel = tk.Label(alterrecord_subframe, text='Failed?')
+    alterrecord_FailureEntry = ttk.Combobox(alterrecord_subframe, state='readonly', values=['Yes', 'No'])
+    alterrecord_FailureEntry.set('No')
+    alterrecord_FailureLabel.grid(column=0, row=19, pady=(6,2), padx=10, sticky='w')
+    alterrecord_FailureEntry.grid(column=0, row=20, pady=0, padx=10)
+
+    alterrecord_button = tk.Button(alterrecord_subframe, text='Alter', command=addCropRecord)
+    alterrecord_button.grid(column=0, row=21, pady=5, padx=10)
+
     # Declare subframe for adding crop records  ------------------
-    addrecord_subframe = ttk.Frame(records_tab, borderwidth=2)
+    addrecord_subframe = ttk.Frame(records_tab)
     addrecord_subframe.grid(column=2, row=0)
 
-    addrecord_Label = tk.Label(addrecord_subframe, text= "Add record")
+    addrecord_Label = tk.Label(addrecord_subframe, text="Add record")
     addrecord_Label.grid(column=0, row=0, pady=10)
 
     addrecord_BedLabel = tk.Label(addrecord_subframe, text='Bed')
@@ -258,7 +350,7 @@ else:
     addrecord_FailureLabel.grid(column=0, row=19, pady=(6,2), padx=10, sticky='w')
     addrecord_FailureEntry.grid(column=0, row=20, pady=0, padx=10)
 
-    addrecord_button = tk.Button(addrecord_subframe, text='Add to records', command=addCropRecord)
+    addrecord_button = tk.Button(addrecord_subframe, text='Add', command=addCropRecord)
     addrecord_button.grid(column=0, row=21, pady=5, padx=10)
 
 
