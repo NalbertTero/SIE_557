@@ -75,6 +75,7 @@ def insertIntoDatabase(con, sql):
     try:
         cursor = con.cursor()
         cursor.execute(sql)
+        con.commit()
 
     except DatabaseError:
         messagebox.showinfo("Error adding entry to the database.")
