@@ -27,7 +27,6 @@ def acknowledgeConnectionError():
 
 # Tab Control function. -----------------------------
 def loadGardens():
-
     existing_gardens_listbox.delete(0,'end')
     num_rows, rows = gdf.load_database_results(con, "SELECT * FROM gardens")
     for index, row in enumerate(rows):
@@ -37,13 +36,41 @@ def loadGardens():
     num_cults, cults = gdf.load_database_results(con, "SELECT cultivar.CultivarName FROM cultivar")
     for c in cults:
         cultivar_list.append(c[0])
-    addrecord_CultivarEntry['values'] = cultivar_list
-    addrecord_CultivarEntry.set(cultivar_list[0])
-    alterrecord_CultivarEntry['values'] = cultivar_list
-    alterrecord_CultivarEntry.set(cultivar_list[0])
 
-# Crop record functions. --------------------------
-def onGardenSelect_Record(event):
+    alter_record_frame.setCultivarList(cultivar_list)
+    add_record_frame.setCultivarList(cultivar_list)
+    alter_plan_frame.setCultivarList(cultivar_list)
+    add_plan_frame.setCultivarList(cultivar_list)
+
+def refreshTrees(selected_garden):
+    if selected_garden is not None:
+        for item in records_treeview.get_children():
+            records_treeview.delete(item)
+        for item in plans_treeview.get_children():
+            plans_treeview.delete(item)
+
+    bed_list = ['Choose planting bed']
+    num_rows, rows = gdf.load_database_results(con, f"SELECT * FROM plantingbeds WHERE plantingbeds.InGarden = '{selected_garden}';")
+    for row in rows:
+        records_treeview.insert('', 'end', row[0], text=f'Bed {row[0]} - {row[1]} sq. ft.')
+        num_records, records = gdf.load_database_results(con, f"SELECT * FROM croprecord LEFT JOIN cultivar ON croprecord.cultivar = cultivar.CultivarName WHERE croprecord.Bed = '{row[0]}'")
+        for record in records:
+            records_treeview.insert(row[0], 'end', iid=None, text='', values=(record[2], record[1], record[12], record[4], record[5], record[6], record[7], record[8], record[9], record[10], record[0]))
+        bed_list.append(row[0])
+
+    num_rows, rows = gdf.load_database_results(con,
+                                               f"SELECT * FROM plantingbeds WHERE plantingbeds.InGarden = '{selected_garden}';")
+    for row in rows:
+        plans_treeview.insert('', 'end', row[0], text=f'Bed {row[0]} - {row[1]} sq. ft.')
+        num_records, records = gdf.load_database_results(con, f"SELECT * FROM cropplan LEFT JOIN cultivar ON cropplan.cultivar = cultivar.CultivarName WHERE cropplan.Bed = '{row[0]}'")
+        for record in records:
+            plans_treeview.insert(row[0], 'end', iid=None, text='', values=(
+            record[2], record[1], record[12], record[4], record[5], record[6], record[7], record[8], record[9],
+            record[0]))
+
+    return bed_list
+
+def onGardenSelect(event):
     global Selected_Garden_Records
     list = event.widget
     selection = event.widget.curselection()
@@ -51,48 +78,24 @@ def onGardenSelect_Record(event):
 
     Selected_Garden_Records = selected_garden
 
-    if selected_garden is not None:
-        for item in records_treeview.get_children():
-            records_treeview.delete(item)
+    bed_list = refreshTrees(selected_garden)
 
-    bedlist = ['Choose planting bed']
-    num_rows, rows = gdf.load_database_results(con, f"SELECT * FROM plantingbeds WHERE plantingbeds.InGarden = '{selected_garden}';")
-    for row in rows:
-        records_treeview.insert('', 'end', row[0], text=f'Bed {row[0]} - {row[1]} sq. ft.')
-        num_records, records = gdf.load_database_results(con, f"SELECT * FROM croprecord LEFT JOIN cultivar ON croprecord.cultivar = cultivar.CultivarName WHERE croprecord.Bed = '{row[0]}'")
-        for record in records:
-            records_treeview.insert(row[0], 'end', record[1], text='', values=(record[2], record[1], record[12], record[4], record[5], record[6], record[7], record[8], record[9], record[10], record[0]))
-        bedlist.append(row[0])
-        addrecord_BedEntry['values'] = bedlist
-        addrecord_BedEntry.set(bedlist[0])
-        alterrecord_BedEntry['values'] = bedlist
-        alterrecord_BedEntry.set(bedlist[0])
+    alter_record_frame.setBedList(bed_list)
+    add_record_frame.setBedList(bed_list)
+    alter_plan_frame.setBedList(bed_list)
+    add_plan_frame.setBedList(bed_list)
 
 def onRecordSelect(event):
     records = event.widget
-
-    alterrecord_BedEntry.set('')
-    alterrecord_YearEntry.delete(0, 'end')
-    alterrecord_CultivarEntry.set('')
-    alterrecord_AreaEntry.delete(0, 'end')
-    alterrecord_PestEntry.set('')
-    alterrecord_DiseaseEntry.set('')
-    alterrecord_FailureEntry.set('')
-
     selected_record = records.focus()
     parent_bed = records.parent(selected_record)
-    selected_values = records_treeview.item(selected_record)
 
-    alterrecord_BedEntry.set(f'{parent_bed}')
-    alterrecord_YearEntry.insert(0, selected_values['values'][0])
-    alterrecord_CultivarEntry.set(selected_values['values'][1])
-    alterrecord_AreaEntry.insert(0, selected_values['values'][3])
-    alterrecord_PlantedEntry.set_date(dt.strptime(selected_values['values'][4], '%Y-%m-%d'))
-    alterrecord_HarvestedEntry.set_date(dt.strptime(selected_values['values'][5], '%Y-%m-%d'))
-    alterrecord_PulledEntry.set_date(dt.strptime(selected_values['values'][6], '%Y-%m-%d'))
-    alterrecord_PestEntry.set(selected_values['values'][7])
-    alterrecord_DiseaseEntry.set(selected_values['values'][8])
-    alterrecord_FailureEntry.set(selected_values['values'][9])
+    if records == records_treeview:
+        selected_values = records_treeview.item(selected_record)
+        alter_record_frame.setEntryValues(parent_bed, selected_values)
+    else:
+        selected_values = plans_treeview.item(selected_record)
+        alter_plan_frame.setEntryValues(parent_bed, selected_values)
 
 def onAddRecordPress():
     add_record_frame.tkraise()
@@ -100,30 +103,30 @@ def onAddRecordPress():
 def onAlterRecordPress():
     alter_record_frame.tkraise()
 
+#def onDeleteRecordPress():
+
 def onAddPlanPress():
     add_record_frame.tkraise()
 
 def onAlterPlanPress():
     alter_record_frame.tkraise()
 
+#def onDeletePlanPress():
+
 def addCropRecord():
 
-    bed = addrecord_BedEntry.get()
-    year = addrecord_YearEntry.get()
-    cultivar = addrecord_CultivarEntry.get()
-    area = addrecord_AreaEntry.get()
-    datePlant = addrecord_PlantedEntry.get_date()
-    dateHarvest = addrecord_HarvestedEntry.get_date()
-    datePulled = addrecord_PulledEntry.get_date()
-    pest = addrecord_PestEntry.get()
-    disease = addrecord_DiseaseEntry.get()
-    failure = addrecord_FailureEntry.get()
+    values = add_record_frame.getEntryValues()
 
     sql = f"INSERT INTO croprecord " \
           f"(Cultivar, Year, Bed, SqFtPlanted, PlantingDate, HarvestDate, PullDate, DiseasePressure, PestPressure, Failure) VALUES" \
-          f"('{cultivar}', {year}, {bed}, {area}, '{datePlant}', '{dateHarvest}', '{datePulled}', '{disease}', '{pest}', '{failure}')"
+          f"('{values['Cultivar']}', {values['Year']}, {values['Bed']}, {values['Area']}, '{values['PlantDate']}', '{values['HarvestDate']}', " \
+          f"'{values['PullDate']}', '{values['Disease']}', '{values['Pest']}', '{values['Failure']}')"
 
     gdf.insertIntoDatabase(con, sql)
+
+    selection = existing_gardens_listbox.curselection()
+    existi
+    x = refreshTrees
 
 def alterCropRecord():
     selected = records_treeview.focus()
@@ -163,29 +166,19 @@ def alterCropRecord():
         alterrecord_BedEntry['values'] = bedlist
         alterrecord_BedEntry.set(bedlist[0])
 
-def onGardenSelect_Plan(event):
+def addCropPlan():
+    pass
 
-    for item in plans_treeview.get_children():
-        plans_treeview.delete(item)
-
-    list = event.widget
-    selection = event.widget.curselection()
-    selected_garden = list.get(selection)
-
-    num_rows, rows = gdf.load_database_results(con, f"SELECT * FROM plantingbeds WHERE plantingbeds.InGarden = '{selected_garden}';")
-    for row in rows:
-        plans_treeview.insert('', 'end', row[0], text=f'Bed {row[0]} - {row[1]} sq. ft.')
-        num_records, records = gdf.load_database_results(con, f"SELECT * FROM cropplan LEFT JOIN cultivar ON cropplan.cultivar = cultivar.CultivarName WHERE cropplan.Bed = '{row[0]}'")
-        for record in records:
-            plans_treeview.insert(row[0], 'end', record[1], text='', values=(record[2], record[1], record[12], record[4], record[5], record[6], record[7], record[8], record[9], record[0]))
+def alterCropPlan():
+    pass
 
 class EntryFrame(ttk.Frame):
-    def __init__(self, container, name):
+    def __init__(self, container, name, function):
         super().__init__(container)
 
-        self.__create_widgets(name)
+        self.__create_widgets(name, function)
 
-    def __create_widgets(self, name):
+    def __create_widgets(self, name, function):
         frame_Label = tk.Label(self, text=f'{name}')
         frame_Label.grid(column=0, row=0, pady=10)
 
@@ -244,12 +237,51 @@ class EntryFrame(ttk.Frame):
         frame_FailureLabel.grid(column=0, row=19, pady=(6, 2), padx=10, sticky='w')
         self.frame_FailureEntry.grid(column=0, row=20, pady=0, padx=10)
 
-        frame_button = tk.Button(self, text=f'{name}', command=alterCropRecord)
+        frame_button = tk.Button(self, text=f'{name}', command=function)
         frame_button.grid(column=0, row=21, pady=5, padx=10)
 
     def setCultivarList(self, list):
-        self.frame_CultivarEntry.get()
+        self.frame_CultivarEntry['values'] = list
         self.frame_CultivarEntry.set(list[0])
+
+    def setBedList(self, list):
+        self.frame_BedEntry['values'] = list
+        self.frame_BedEntry.set(list[0])
+
+    def setEntryValues(self, parent_bed, selected_values):
+        self.frame_BedEntry.set('')
+        self.frame_YearEntry.delete(0, 'end')
+        self.frame_CultivarEntry.set('')
+        self.frame_AreaEntry.delete(0, 'end')
+        self.frame_PestEntry.set('')
+        self.frame_DiseaseEntry.set('')
+        self.frame_FailureEntry.set('')
+
+        self.frame_BedEntry.set(f'{parent_bed}')
+        self.frame_YearEntry.insert(0, selected_values['values'][0])
+        self.frame_CultivarEntry.set(selected_values['values'][1])
+        self.frame_AreaEntry.insert(0, selected_values['values'][3])
+        self.frame_PlantedEntry.set_date(dt.strptime(selected_values['values'][4], '%Y-%m-%d'))
+        self.frame_HarvestedEntry.set_date(dt.strptime(selected_values['values'][5], '%Y-%m-%d'))
+        self.frame_PulledEntry.set_date(dt.strptime(selected_values['values'][6], '%Y-%m-%d'))
+        self.frame_PestEntry.set(selected_values['values'][7])
+        self.frame_DiseaseEntry.set(selected_values['values'][8])
+        self.frame_FailureEntry.set(selected_values['values'][9])
+
+    def getEntryValues(self):
+        values = {}
+        values['Bed'] = self.frame_BedEntry.get()
+        values['Year'] = self.frame_YearEntry.get()
+        values['Cultivar'] = self.frame_CultivarEntry.get()
+        values['Area'] = self.frame_AreaEntry.get()
+        values['PlantDate'] = self.frame_PlantedEntry.get_date()
+        values['HarvestDate'] = self.frame_HarvestedEntry.get_date()
+        values['PullDate'] = self.frame_PulledEntry.get_date()
+        values['Pest'] = self.frame_PestEntry.get()
+        values['Disease'] = self.frame_DiseaseEntry.get()
+        values['Failure'] = self.frame_FailureEntry.get()
+
+        return values
 
 
 # Test database connection by attempting to establish a connection.
@@ -311,7 +343,7 @@ else:
 
     existing_gardens_listbox = tk.Listbox(garden_subframe, yscrollcommand=existing_gardens_scrollbar.set)
     existing_gardens_listbox.grid(column=0, row=2, padx=(0,4))
-    existing_gardens_listbox.bind("<<ListboxSelect>>", onGardenSelect_Record)
+    existing_gardens_listbox.bind("<<ListboxSelect>>", onGardenSelect)
 
     existing_gardens_scrollbar.config(command=existing_gardens_listbox.yview)
     existing_gardens_scrollbar.grid(column=0, row=2)
@@ -483,16 +515,16 @@ else:
     addrecord_button = tk.Button(addrecord_subframe, text='Add', command=addCropRecord)
     addrecord_button.grid(column=0, row=21, pady=5, padx=10)
 
-    alter_record_frame = EntryFrame(program, 'Alter record')
+    alter_record_frame = EntryFrame(program, 'Alter record', alterCropRecord)
     alter_record_frame.grid(column=2, row=0)
 
-    add_record_frame = EntryFrame(program, 'Add record')
+    add_record_frame = EntryFrame(program, 'Add record', addCropRecord)
     add_record_frame.grid(column=2, row=0)
 
-    alter_plan_frame = EntryFrame(program, 'Alter plan')
+    alter_plan_frame = EntryFrame(program, 'Alter plan', alterCropPlan)
     alter_plan_frame.grid(column=2, row=0)
 
-    add_plan_frame = EntryFrame(program, 'Add plan')
+    add_plan_frame = EntryFrame(program, 'Add plan', addCropPlan)
     add_plan_frame.grid(column=2, row=0)
 
     program.pack(expand=1, fill='both')
