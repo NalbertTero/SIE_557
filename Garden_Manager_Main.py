@@ -60,7 +60,6 @@ def refreshTrees(selected_garden):
         plans_treeview.insert('', 'end', row[0], text=f'Bed {row[0]} - {row[1]} sq. ft.')
         num_records, records = gdf.load_database_results(con, f"SELECT * FROM cropplan LEFT JOIN cultivar ON cropplan.cultivar = cultivar.CultivarName WHERE cropplan.Bed = '{row[0]}'")
         for record in records:
-            print(record)
             plans_treeview.insert(row[0], 'end', iid=None, text='', values=(
                 record[1], record[3], record[2], record[10], record[5], record[11], record[6], record[7], record[8], record[0]))
 
@@ -102,9 +101,7 @@ def onAlterRecordPress():
 def onDeleteRecordPress():
     values = alter_record_frame.getEntryValues()
 
-    sql = f"DELETE " \
-          f" SET Cultivar = '{values['Cultivar']}', Year = '{values['Year']}', Bed = '{values['Bed']}', SqFtPlanted = '{values['Area']}', PlantingDate = '{values['PlantDate']}', " \
-          f"HarvestDate = '{values['HarvestDate']}', PullDate = '{values['PullDate']}', DiseasePressure = '{values['Disease']}', PestPressure = '{values['Pest']}', Failure = '{values['Failure']}'" \
+    sql = f"DELETE FROM croprecord " \
           f"WHERE CropID = {values['ID']}"
 
     gdf.insertIntoDatabase(con, sql)
@@ -118,7 +115,14 @@ def onAlterPlanPress():
     alter_plan_frame.tkraise()
 
 def onDeletePlanPress():
-    pass
+    values = alter_plan_frame.getEntryValues()
+    print(values)
+    sql = f"DELETE FROM cropplan " \
+          f"WHERE CropPlanID = {values['ID']}"
+
+    gdf.insertIntoDatabase(con, sql)
+
+    x = refreshTrees(Selected_Garden_Records)
 
 def addCropRecord():
     values = add_record_frame.getEntryValues()
@@ -255,6 +259,7 @@ class EntryFrame(ttk.Frame):
         else:
             PlanLabel.grid_remove()
             self.PlanEntry.grid_remove()
+            frame_button.grid(column=0, row=21, pady=(20,0), padx=10)
 
     def setCultivarList(self, list):
         self.frame_CultivarEntry['values'] = list
@@ -390,6 +395,10 @@ else:
     existing_gardens_scrollbar.config(command=existing_gardens_listbox.yview)
     existing_gardens_scrollbar.grid(column=0, row=2)
 
+    add_garden_Label = tk.Label(garden_subframe, text='Add new garden')
+    add_garden_Entry = tk.Entry(garden_subframe)
+    add_garden_Button = tk.Button(garden)
+
     # Declare subframe for crop record & plan treeview  ------------------
     records_subframe = ttk.Frame(program)
     records_subframe.grid(column=1, row=0)
@@ -429,7 +438,7 @@ else:
     alter_plan_button = tk.Button(records_subframe, text='Alter selected plan', command=onAlterPlanPress)
     alter_plan_button.grid(column=0, row=4, pady=(0,6))
 
-    delete_plan_button = tk.Button(records_subframe, text='Delete selected plan')
+    delete_plan_button = tk.Button(records_subframe, text='Delete selected plan', command=onDeletePlanPress)
     delete_plan_button.grid(column=0, row=4, sticky='e', pady=(0,6))
 
     # Declare subframes for working with crop records and plans.  ------------------
