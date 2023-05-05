@@ -13,7 +13,6 @@ import GM_db_functions as gdf
 rows = []
 num_rows = 0
 
-
 # Defining functions for controlling application GUI behavior.
 # --------------------------------------------------------------------------------------------------------------------------------
 
@@ -21,7 +20,7 @@ num_rows = 0
 def acknowledgeConnectionError():
     quit()
 
-# Tab Control function. -----------------------------
+# Function to start workflow by loading all gardens from database. -----------------------------
 def loadGardens():
     existing_gardens_listbox.delete(0,'end')
     num_rows, rows = gdf.load_database_results(con, "SELECT * FROM gardens")
@@ -38,6 +37,7 @@ def loadGardens():
     alter_plan_frame.setCultivarList(cultivar_list)
     add_plan_frame.setCultivarList(cultivar_list)
 
+# Function to refresh both treeviews, to be called by other functions. -----------------------------
 def refreshTrees(selected_garden):
     if selected_garden is not None:
         for item in records_treeview.get_children():
@@ -54,17 +54,20 @@ def refreshTrees(selected_garden):
             records_treeview.insert(row[0], 'end', iid=None, text='', values=(record[2], record[1], record[12], record[4], record[5], record[6], record[7], record[8], record[9], record[10], record[0]))
         bed_list.append(row[0])
 
-    num_rows, rows = gdf.load_database_results(con,
-                                               f"SELECT * FROM plantingbeds WHERE plantingbeds.InGarden = '{selected_garden}';")
+    plan_list = ['Plans...']
+    num_rows, rows = gdf.load_database_results(con, f"SELECT * FROM plantingbeds WHERE plantingbeds.InGarden = '{selected_garden}';")
     for row in rows:
         plans_treeview.insert('', 'end', row[0], text=f'Bed {row[0]} - {row[1]} sq. ft.')
         num_records, records = gdf.load_database_results(con, f"SELECT * FROM cropplan LEFT JOIN cultivar ON cropplan.cultivar = cultivar.CultivarName WHERE cropplan.Bed = '{row[0]}'")
         for record in records:
             plans_treeview.insert(row[0], 'end', iid=None, text='', values=(
                 record[1], record[3], record[2], record[10], record[5], record[11], record[6], record[7], record[8], record[0]))
+            plan_list.append(record[1])
+    unique_plans = list(set(plan_list))
 
-    return bed_list
+    return bed_list, unique_plans
 
+# Function to load records into both treeviews when a garden is selected. -----------------------------
 def onGardenSelect(event):
     global Selected_Garden_Records
     list = event.widget
@@ -73,13 +76,16 @@ def onGardenSelect(event):
 
     Selected_Garden_Records = selected_garden
 
-    bed_list = refreshTrees(selected_garden)
+    bed_list, plan_list = refreshTrees(selected_garden)
 
     alter_record_frame.setBedList(bed_list)
     add_record_frame.setBedList(bed_list)
     alter_plan_frame.setBedList(bed_list)
+    alter_plan_frame.setPlanList(plan_list)
     add_plan_frame.setBedList(bed_list)
+    add_plan_frame.setBedList(plan_list)
 
+# Function to set the values of the alteration panes to the currently selected treeview record . -----------------------------
 def onRecordSelect(event):
     records = event.widget
     selected_record = records.focus()
@@ -92,12 +98,30 @@ def onRecordSelect(event):
         selected_values = plans_treeview.item(selected_record)
         alter_plan_frame.setPlanEntryValues(parent_bed, selected_values)
 
+# Function to load insert a new garden into the database. -----------------------------
+def onAddGardenPress():
+    name = add_garden_Entry.get()
+    sql = f"INSERT INTO gardens (GardenName) VALUES ('{name}')"
+    gdf.insertIntoDatabase(con, sql)
+    loadGardens()
+
+# Function to insert a new planting bed into the database. -----------------------------
+def onAddBedPress():
+    area = add_bed_Entry.get()
+    sql = f"INSERT INTO plantingbeds (SqFt, InGarden) VALUES ({area}, '{Selected_Garden_Records}')"
+    gdf.insertIntoDatabase(con, sql)
+
+    x = refreshTrees(Selected_Garden_Records)
+
+# Function to raise the 'add record' pane to the top of the right-hand subframe. -----------------------------
 def onAddRecordPress():
     add_record_frame.tkraise()
 
+# Function to raise the 'alter record' pane to the top of the right-hand subframe. -----------------------------
 def onAlterRecordPress():
     alter_record_frame.tkraise()
 
+# Function to delete the record currently selected in the record treeview from the database. -----------------------------
 def onDeleteRecordPress():
     values = alter_record_frame.getEntryValues()
 
@@ -108,12 +132,15 @@ def onDeleteRecordPress():
 
     x = refreshTrees(Selected_Garden_Records)
 
+# Function to raise the 'add plan' pane to the top of the right-hand subframe. -----------------------------
 def onAddPlanPress():
     add_plan_frame.tkraise()
 
+# Function to raise the 'alter plan' pane to the top of the right-hand subframe. -----------------------------
 def onAlterPlanPress():
     alter_plan_frame.tkraise()
 
+# Function to delete the plan currently selected in the plan treeview from the database. -----------------------------
 def onDeletePlanPress():
     values = alter_plan_frame.getEntryValues()
     print(values)
@@ -124,6 +151,7 @@ def onDeletePlanPress():
 
     x = refreshTrees(Selected_Garden_Records)
 
+# Function to add the current values of the 'add record' pane into the records table. -----------------------------
 def addCropRecord():
     values = add_record_frame.getEntryValues()
 
@@ -136,6 +164,7 @@ def addCropRecord():
 
     x = refreshTrees(Selected_Garden_Records)
 
+# Function to modify the currently selected record from the records treeview. -----------------------------
 def alterCropRecord():
     values = alter_record_frame.getEntryValues()
 
@@ -148,6 +177,7 @@ def alterCropRecord():
 
     x = refreshTrees(Selected_Garden_Records)
 
+# Function to add the current values of the 'add plan' pane into the records table. -----------------------------
 def addCropPlan():
     values = add_plan_frame.getEntryValues()
 
@@ -160,6 +190,7 @@ def addCropPlan():
 
     x = refreshTrees(Selected_Garden_Records)
 
+# Function to modify the currently selected plan from the plans treeview. -----------------------------
 def alterCropPlan():
     values = alter_plan_frame.getEntryValues()
 
@@ -172,6 +203,8 @@ def alterCropPlan():
 
     x = refreshTrees(Selected_Garden_Records)
 
+# Defining the class from which the add & alter, records & plans panes will be created. Includes appropriate widgets,
+# and 'get' and 'set' methods for working with the values of all the widgets. -----------------------------
 class EntryFrame(ttk.Frame):
     def __init__(self, container, name, function):
         super().__init__(container)
@@ -273,7 +306,7 @@ class EntryFrame(ttk.Frame):
         self.PlanEntry['values'] = list
 
     def setRecordEntryValues(self, parent_bed, selected_values):
-        self.PlanEntry.set('')
+        self.PlanEntry.delete(0, 'end')
         self.frame_BedEntry.set('')
         self.frame_YearEntry.delete(0, 'end')
         self.frame_CultivarEntry.set('')
@@ -331,10 +364,11 @@ class EntryFrame(ttk.Frame):
 
         return values
 
+###### BEGIN EXECUTION CODE ######
+
 # Test database connection by attempting to establish a connection.
 # If the connection attempt fails, the program will exit with a warning message.
 # --------------------------------------------------------------------------------------------------------------------------------
-
 status, con = gdf.open_database()
 
 if status == 0:
@@ -361,7 +395,6 @@ if status == 0:
 
 # If connection tests successfully, declare and launch main application.
 # --------------------------------------------------------------------------------------------------------------------------------
-
 else:
 
     # Create the root program.
@@ -376,7 +409,7 @@ else:
     # --------------------------------------------------
     program = ttk.Frame(root)
 
-    # Declare subframe for garden list ------------------
+    # Declare subframe & widgets for garden list. ------------------
     garden_subframe = ttk.Frame(program, borderwidth=2)
     garden_subframe.grid(column=0, row=0)
 
@@ -397,9 +430,23 @@ else:
 
     add_garden_Label = tk.Label(garden_subframe, text='Add new garden')
     add_garden_Entry = tk.Entry(garden_subframe)
-    add_garden_Button = tk.Button(garden)
+    add_garden_Button = tk.Button(garden_subframe, text='Add', command=onAddGardenPress)
 
-    # Declare subframe for crop record & plan treeview  ------------------
+    add_garden_Label.grid(column=0, row=3, padx=3, pady=(10,0))
+    add_garden_Entry.grid(column=0, row=4, padx=3, pady=5)
+    add_garden_Button.grid(column=0, row=5, padx=3, pady=5)
+
+    add_bed_Label = tk.Label(garden_subframe, text='Add bed to garden')
+    add_bed_Area = tk.Label(garden_subframe, text='Sq. ft.:')
+    add_bed_Entry = tk.Entry(garden_subframe, width=10)
+    add_bed_Button = tk.Button(garden_subframe, text='Add', command=onAddBedPress)
+
+    add_bed_Label.grid(column=0, row=6, padx=3, pady=(10,0))
+    add_bed_Area.grid(column=0, row=7, sticky='w', padx=3, pady=5)
+    add_bed_Entry.grid(column=0, row=7, sticky='e', padx=3, pady=5)
+    add_bed_Button.grid(column=0, row=8, padx=3, pady=5)
+
+    # Declare subframe & widgets for crop record & plan treeviews.  ------------------
     records_subframe = ttk.Frame(program)
     records_subframe.grid(column=1, row=0)
 
@@ -426,7 +473,7 @@ else:
 
     plans_treeview = ttk.Treeview(records_subframe, columns=plan_columns, height=12)
     for column in plan_columns[:-1]:
-        plans_treeview.column(column, width=75)
+        plans_treeview.column(column, width=82)
         plans_treeview.heading(column, text=column)
     plans_treeview.column('ID', width=0)
     plans_treeview.bind("<<TreeviewSelect>>", onRecordSelect)
@@ -455,5 +502,7 @@ else:
     add_record_frame.grid(column=2, row=0)
 
     program.pack(expand=1, fill='both')
+
+
     # ======== main loop ============ #
     root.mainloop()
