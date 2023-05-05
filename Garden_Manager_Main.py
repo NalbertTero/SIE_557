@@ -26,41 +26,21 @@ def acknowledgeConnectionError():
     quit()
 
 # Tab Control function. -----------------------------
-def onTabSelected(event):
+def loadGardens():
 
-    selected_tab = event.widget.select()
-    tab_text = event.widget.tab(selected_tab, "text")
+    existing_gardens_listbox.delete(0,'end')
+    num_rows, rows = gdf.load_database_results(con, "SELECT * FROM gardens")
+    for index, row in enumerate(rows):
+        existing_gardens_listbox.insert(index, row[1])
 
-    if tab_text == "Crop Records":
-
-        existing_gardens_listbox.delete(0,'end')
-        num_rows, rows = gdf.load_database_results(con, "SELECT * FROM gardens")
-        for index, row in enumerate(rows):
-            existing_gardens_listbox.insert(index, row[1])
-
-        cultivar_list = ['Choose cultivar']
-        num_cults, cults = gdf.load_database_results(con, "SELECT cultivar.CultivarName FROM cultivar")
-        for c in cults:
-            cultivar_list.append(c[0])
-        addrecord_CultivarEntry['values'] = cultivar_list
-        addrecord_CultivarEntry.set(cultivar_list[0])
-        alterrecord_CultivarEntry['values'] = cultivar_list
-        alterrecord_CultivarEntry.set(cultivar_list[0])
-
-    if tab_text == "Garden Plans":
-
-        plans_listbox.delete(0, 'end')
-        num_rows, rows = gdf.load_database_results(con, "SELECT * FROM gardens")
-        for index, row in enumerate(rows):
-            plans_listbox.insert(index, row[1])
-
-    if tab_text == "Manage Cultivars":
-
-        pass
-
-    if tab_text == "Insights":
-
-        pass
+    cultivar_list = ['Choose cultivar']
+    num_cults, cults = gdf.load_database_results(con, "SELECT cultivar.CultivarName FROM cultivar")
+    for c in cults:
+        cultivar_list.append(c[0])
+    addrecord_CultivarEntry['values'] = cultivar_list
+    addrecord_CultivarEntry.set(cultivar_list[0])
+    alterrecord_CultivarEntry['values'] = cultivar_list
+    alterrecord_CultivarEntry.set(cultivar_list[0])
 
 # Crop record functions. --------------------------
 def onGardenSelect_Record(event):
@@ -114,11 +94,17 @@ def onRecordSelect(event):
     alterrecord_DiseaseEntry.set(selected_values['values'][8])
     alterrecord_FailureEntry.set(selected_values['values'][9])
 
-def onAddButtonPress():
-    addrecord_subframe.tkraise()
+def onAddRecordPress():
+    add_record_frame.tkraise()
 
-def onAlterButtonPress():
-    alterrecord_subframe.tkraise()
+def onAlterRecordPress():
+    alter_record_frame.tkraise()
+
+def onAddPlanPress():
+    add_record_frame.tkraise()
+
+def onAlterPlanPress():
+    alter_record_frame.tkraise()
 
 def addCropRecord():
 
@@ -193,6 +179,78 @@ def onGardenSelect_Plan(event):
         for record in records:
             plans_treeview.insert(row[0], 'end', record[1], text='', values=(record[2], record[1], record[12], record[4], record[5], record[6], record[7], record[8], record[9], record[0]))
 
+class EntryFrame(ttk.Frame):
+    def __init__(self, container, name):
+        super().__init__(container)
+
+        self.__create_widgets(name)
+
+    def __create_widgets(self, name):
+        frame_Label = tk.Label(self, text=f'{name}')
+        frame_Label.grid(column=0, row=0, pady=10)
+
+        frame_BedLabel = tk.Label(self, text='Bed')
+        self.frame_BedEntry = ttk.Combobox(self, state='readonly')
+        frame_BedLabel.grid(column=0, row=1, pady=(6, 2), padx=10, sticky='w')
+        self.frame_BedEntry.grid(column=0, row=2, pady=0, padx=10)
+
+        frame_YearLabel = tk.Label(self, text='Year')
+        self.frame_YearEntry = tk.Entry(self)
+        frame_YearLabel.grid(column=0, row=3, pady=(6, 2), padx=10, sticky='w')
+        self.frame_YearEntry.grid(column=0, row=4, pady=0, padx=10)
+
+        frame_CultivarLabel = tk.Label(self, text='Cultivar')
+        self.frame_CultivarEntry = ttk.Combobox(self, state='readonly')
+        frame_CultivarLabel.grid(column=0, row=5, pady=(6, 2), padx=10, sticky='w')
+        self.frame_CultivarEntry.grid(column=0, row=6, pady=0, padx=10)
+
+        frame_AreaLabel = tk.Label(self, text='Area')
+        self.frame_AreaEntry = tk.Entry(self)
+        frame_AreaLabel.grid(column=0, row=7, pady=(6, 2), padx=10, sticky='w')
+        self.frame_AreaEntry.grid(column=0, row=8, pady=0, padx=10)
+
+        frame_PlantedLabel = tk.Label(self, text='Date Planted')
+        self.frame_PlantedEntry = tkc.DateEntry(self)
+        frame_PlantedLabel.grid(column=0, row=9, pady=(6, 2), padx=10, sticky='w')
+        self.frame_PlantedEntry.grid(column=0, row=10, pady=0, padx=10, sticky='w')
+
+        frame_HarvestedLabel = tk.Label(self, text='Date Harvested')
+        self.frame_HarvestedEntry = tkc.DateEntry(self)
+        frame_HarvestedLabel.grid(column=0, row=11, pady=(6, 2), padx=10, sticky='w')
+        self.frame_HarvestedEntry.grid(column=0, row=12, pady=0, padx=10, sticky='w')
+
+        frame_PulledLabel = tk.Label(self, text='Date Pulled')
+        self.frame_PulledEntry = tkc.DateEntry(self)
+        frame_PulledLabel.grid(column=0, row=13, pady=(6, 2), padx=10, sticky='w')
+        self.frame_PulledEntry.grid(column=0, row=14, pady=0, padx=10, sticky='w')
+
+        frame_PestLabel = tk.Label(self, text='Pest')
+        self.frame_PestEntry = ttk.Combobox(self, state='readonly',
+                                             values=['None', 'Low', 'Medium', 'High'])
+        self.frame_PestEntry.set('None')
+        frame_PestLabel.grid(column=0, row=15, pady=(6, 2), padx=10, sticky='w')
+        self.frame_PestEntry.grid(column=0, row=16, pady=0, padx=10)
+
+        frame_DiseaseLabel = tk.Label(self, text='Disease')
+        self.frame_DiseaseEntry = ttk.Combobox(self, state='readonly',
+                                                values=['None', 'Low', 'Medium', 'High'])
+        self.frame_DiseaseEntry.set('None')
+        frame_DiseaseLabel.grid(column=0, row=17, pady=(6, 2), padx=10, sticky='w')
+        self.frame_DiseaseEntry.grid(column=0, row=18, pady=0, padx=10)
+
+        frame_FailureLabel = tk.Label(self, text='Failed?')
+        self.frame_FailureEntry = ttk.Combobox(self, state='readonly', values=['Yes', 'No'])
+        self.frame_FailureEntry.set('No')
+        frame_FailureLabel.grid(column=0, row=19, pady=(6, 2), padx=10, sticky='w')
+        self.frame_FailureEntry.grid(column=0, row=20, pady=0, padx=10)
+
+        frame_button = tk.Button(self, text=f'{name}', command=alterCropRecord)
+        frame_button.grid(column=0, row=21, pady=5, padx=10)
+
+    def setCultivarList(self, list):
+        self.frame_CultivarEntry.get()
+        self.frame_CultivarEntry.set(list[0])
+
 
 # Test database connection by attempting to establish a connection.
 # If the connection attempt fails, the program will exit with a warning message.
@@ -227,7 +285,7 @@ if status == 0:
 
 else:
 
-    # Create the root program and notebook to hold tabs.
+    # Create the root program.
     # --------------------------------------------------
     root = tk.Tk()
     root.title('Garden Manager 1.0')
@@ -235,37 +293,36 @@ else:
     s = ttk.Style(root)
     s.theme_use('clam')
 
-    program = ttk.Notebook(root)
-    s.configure("TNotebook", tabposition='n')
-    program.bind("<<NotebookTabChanged>>", onTabSelected)
-
-    # Declare records tab.
+    # Declare main frame.
     # --------------------------------------------------
-    records_tab = ttk.Frame(program)
-    program.add(records_tab, text='Crop Records')
+    program = ttk.Frame(root)
 
     # Declare subframe for garden list ------------------
-    garden_subframe = ttk.Frame(records_tab, borderwidth=2)
+    garden_subframe = ttk.Frame(program, borderwidth=2)
     garden_subframe.grid(column=0, row=0)
 
-    existing_gardens_list_label = tk.Label(garden_subframe, text='Choose Garden', pady=5)
-    existing_gardens_list_label.grid(column=0, row=0, sticky='n')
+    gardens_load_button = tk.Button(garden_subframe, text='Load Gardens', command=loadGardens)
+    gardens_load_button.grid(column=0, row=0, sticky='n')
 
-    existing_gardens_scrollbar = tk.Scrollbar(garden_subframe, orient="vertical", )
+    existing_gardens_list_label = tk.Label(garden_subframe, text='Choose Garden', pady=5)
+    existing_gardens_list_label.grid(column=0, row=1)
+
+    existing_gardens_scrollbar = tk.Scrollbar(garden_subframe, orient="vertical")
 
     existing_gardens_listbox = tk.Listbox(garden_subframe, yscrollcommand=existing_gardens_scrollbar.set)
-    existing_gardens_listbox.grid(column=0, row=1,)
+    existing_gardens_listbox.grid(column=0, row=2, padx=(0,4))
     existing_gardens_listbox.bind("<<ListboxSelect>>", onGardenSelect_Record)
 
     existing_gardens_scrollbar.config(command=existing_gardens_listbox.yview)
-    existing_gardens_scrollbar.grid(column=0, row=1)
+    existing_gardens_scrollbar.grid(column=0, row=2)
 
-    # Declare subframe for crop records  ------------------
-    records_subframe = ttk.Frame(records_tab)
+    # Declare subframe for crop record & plan treeview  ------------------
+    records_subframe = ttk.Frame(program)
     records_subframe.grid(column=1, row=0)
 
     tree_columns = ('Year', 'Cultivar', 'Family', 'Area', 'Planted', 'Harvested', 'Pulled', 'Pest', 'Disease', 'Failure', 'ID')
-    records_treeview = ttk.Treeview(records_subframe, columns=tree_columns, height=25)
+
+    records_treeview = ttk.Treeview(records_subframe, columns=tree_columns, height=12)
     for column in tree_columns[:-1]:
         records_treeview.column(column, width=75)
         records_treeview.heading(column, text=column)
@@ -273,17 +330,35 @@ else:
     records_treeview.bind("<<TreeviewSelect>>", onRecordSelect)
     records_treeview.grid(column=0, row=0)
 
-    add_record_button = tk.Button(records_subframe, text='Add new record', command=onAddButtonPress)
-    add_record_button.grid(column=0, row=2, sticky='w', pady=(6,0))
+    add_record_button = tk.Button(records_subframe, text='Add new record', command=onAddRecordPress)
+    add_record_button.grid(column=0, row=2, sticky='w', pady=(0,6))
 
-    alter_record_button = tk.Button(records_subframe, text='Alter selected record', command=onAlterButtonPress)
-    alter_record_button.grid(column=0, row=2, pady=(6,0))
+    alter_record_button = tk.Button(records_subframe, text='Alter selected record', command=onAlterRecordPress)
+    alter_record_button.grid(column=0, row=2, pady=(0,6))
 
     delete_record_button = tk.Button(records_subframe, text='Delete selected record')
-    delete_record_button.grid(column=0, row=2, sticky='e', pady=(6,0))
+    delete_record_button.grid(column=0, row=2, sticky='e', pady=(0,6))
+
+    plans_treeview = ttk.Treeview(records_subframe, columns=tree_columns, height=12)
+    for column in tree_columns[:-1]:
+        plans_treeview.column(column, width=75)
+        plans_treeview.heading(column, text=column)
+    plans_treeview.column('ID', width=0)
+    plans_treeview.bind("<<TreeviewSelect>>", onRecordSelect)
+    plans_treeview.grid(column=0, row=3)
+
+    add_plan_button = tk.Button(records_subframe, text='Add new plan', command=onAddPlanPress)
+    add_plan_button.grid(column=0, row=4, sticky='w', pady=(0,6))
+
+    alter_plan_button = tk.Button(records_subframe, text='Alter selected plan', command=onAlterPlanPress)
+    alter_plan_button.grid(column=0, row=4, pady=(0,6))
+
+    delete_plan_button = tk.Button(records_subframe, text='Delete selected plan')
+    delete_plan_button.grid(column=0, row=4, sticky='e', pady=(0,6))
 
     # Declare subframe for altering crop records  ------------------
-    alterrecord_subframe = ttk.Frame(records_tab)
+
+    alterrecord_subframe = ttk.Frame(program)
     alterrecord_subframe.grid(column=2, row=0)
 
     alterrecord_Label = tk.Label(alterrecord_subframe, text="Alter record")
@@ -346,7 +421,7 @@ else:
     alterrecord_button.grid(column=0, row=21, pady=5, padx=10)
 
     # Declare subframe for adding crop records  ------------------
-    addrecord_subframe = ttk.Frame(records_tab)
+    addrecord_subframe = ttk.Frame(program)
     addrecord_subframe.grid(column=2, row=0)
 
     addrecord_Label = tk.Label(addrecord_subframe, text="Add record")
@@ -408,41 +483,17 @@ else:
     addrecord_button = tk.Button(addrecord_subframe, text='Add', command=addCropRecord)
     addrecord_button.grid(column=0, row=21, pady=5, padx=10)
 
+    alter_record_frame = EntryFrame(program, 'Alter record')
+    alter_record_frame.grid(column=2, row=0)
 
-    # Declare plans tab.
-    # --------------------------------------------------
-    plans_tab = ttk.Frame(program)
-    program.add(plans_tab, text='Garden Plans')
+    add_record_frame = EntryFrame(program, 'Add record')
+    add_record_frame.grid(column=2, row=0)
 
-    plans_list_label = tk.Label(plans_tab, text='Garden Plans', pady=5)
-    plans_list_label.grid(column=0, row=1)
-    plans_scrollbar = tk.Scrollbar(plans_tab, orient="vertical", )
-    plans_listbox = tk.Listbox(plans_tab, yscrollcommand=plans_scrollbar.set)
-    plans_scrollbar.config(command=plans_listbox.yview)
-    plans_listbox.grid(column=0, row=2,)
-    plans_listbox.bind("<<ListboxSelect>>", onGardenSelect_Plan)
-    plans_scrollbar.grid(column=1, row=2)
+    alter_plan_frame = EntryFrame(program, 'Alter plan')
+    alter_plan_frame.grid(column=2, row=0)
 
-    tree_columns = ('Year', 'Cultivar', 'Family', 'Area', 'Planted', 'Harvested', 'Pulled', 'Pest', 'Disease')
-    plans_treeview = ttk.Treeview(plans_tab, columns=tree_columns, height=25)
-    for column in tree_columns:
-        plans_treeview.column(column, width=80)
-        plans_treeview.heading(column, text=column)
-    plans_treeview.grid(column=2, row=2)
-
-
-
-    # Declare manage tab.
-    # --------------------------------------------------
-    manage_tab = ttk.Frame(program)
-    program.add(manage_tab, text='Manage Cultivars')
-
-    # Declare insights tab.
-    # --------------------------------------------------
-    insights_tab = ttk.Frame(program)
-    program.add(insights_tab, text='Insights')
-
-
+    add_plan_frame = EntryFrame(program, 'Add plan')
+    add_plan_frame.grid(column=2, row=0)
 
     program.pack(expand=1, fill='both')
     # ======== main loop ============ #
